@@ -104,7 +104,8 @@ app.post('/api/logout', (req, res) => {
   }
 });
 
-const wss = new WebSocket.Server({ server: app });
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws, req) => {
   let authenticated = false;
@@ -224,10 +225,6 @@ function saveMessageToLog(message) {
 app.get('/api/messages', (req, res) => {
   res.json(messageHistory);
 });
-
-// Create HTTP and WebSocket servers
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
 
 // Store connected clients
 const clients = new Set();
