@@ -175,7 +175,7 @@ wss.on('connection', (ws, req) => {
         // Log and broadcast
         saveMessageToLog(messageData);
         clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(messageData));
           }
         });
@@ -261,7 +261,7 @@ wss.on('connection', (ws) => {
       
       // Broadcast to all clients
       clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify(data));
         }
       });
