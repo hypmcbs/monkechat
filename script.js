@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutButton = document.getElementById('logout-button');
     
     // API URL - replace with your actual server URL
-    const API_URL = 'https://your-app-name.onrender.com';
+    const API_URL = 'https://monkechat.onrender.com';
     
     // Session data
     let sessionData = {
