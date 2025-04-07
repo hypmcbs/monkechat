@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const username = 'User_' + Math.floor(Math.random() * 1000);
   
   // Connect to your deployed WebSocket server
-  const socket = new WebSocket('wss://https://monkechat.onrender.com');
+  const socket = new WebSocket('wss://monkechat.onrender.com');
   // Replace with your actual deployed WebSocket URL when you have it
   
   // Handle connection open
