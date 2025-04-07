@@ -7,9 +7,9 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.2", // or ^2.4.3 if you prefer
+    "bcryptjs": "^3.0.2",
     "express": "^4.18.2",
-    "uuid": "^11.1.0", // or ^9.0.0 if you prefer
+    "uuid": "^11.1.0",
     "ws": "^8.13.0",
     "cors": "^2.8.5"
   },
