@@ -1,47 +1,97 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
+const fs = require('fs');
+const path = require('path');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Serve static files if needed
-app.use(express.static('public'));
+app.use(cors());
+app.use(express.json());
 
-// Create HTTP server
+// Create logs directory if it doesn't exist
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir);
+}
+
+// Initialize message log file
+const messageLogFile = path.join(logsDir, 'chat_messages.json');
+let messageHistory = [];
+
+// Load existing message history if available
+try {
+  if (fs.existsSync(messageLogFile)) {
+    const data = fs.readFileSync(messageLogFile, 'utf8');
+    messageHistory = JSON.parse(data);
+  }
+} catch (error) {
+  console.error('Error loading message history:', error);
+}
+
+// Function to save messages to log file
+function saveMessageToLog(message) {
+  messageHistory.push({
+    ...message,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Limit history size to prevent huge files (optional)
+  if (messageHistory.length > 1000) {
+    messageHistory = messageHistory.slice(messageHistory.length - 1000);
+  }
+  
+  fs.writeFileSync(messageLogFile, JSON.stringify(messageHistory, null, 2));
+}
+
+// HTTP endpoint to get message history
+app.get('/api/messages', (req, res) => {
+  res.json(messageHistory);
+});
+
+// Create HTTP and WebSocket servers
 const server = http.createServer(app);
-
-// Create WebSocket server
 const wss = new WebSocket.Server({ server });
 
 // Store connected clients
 const clients = new Set();
 
-// Handle new connections
 wss.on('connection', (ws) => {
   console.log('New client connected');
   clients.add(ws);
   
-  // Send welcome message
+  // Send message history to new client
   ws.send(JSON.stringify({
+    type: 'history',
+    messages: messageHistory.slice(-50) // Send last 50 messages
+  }));
+  
+  // Welcome message
+  const welcomeMsg = {
     type: 'message',
     content: 'Welcome to the chat!',
-    sender: 'Server'
-  }));
+    sender: 'Server',
+    timestamp: new Date().toISOString()
+  };
+  ws.send(JSON.stringify(welcomeMsg));
   
   // Handle messages
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
       
-      // Broadcast message
+      // Add timestamp
+      data.timestamp = new Date().toISOString();
+      
+      // Log the message
+      saveMessageToLog(data);
+      
+      // Broadcast to all clients
       clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            type: 'message',
-            content: data.content,
-            sender: data.sender
-          }));
+          client.send(JSON.stringify(data));
         }
       });
     } catch (e) {
@@ -56,7 +106,6 @@ wss.on('connection', (ws) => {
   });
 });
 
-// Start server
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
