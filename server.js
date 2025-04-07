@@ -14,6 +14,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Create logs directory if it doesn't exist
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir);
+}
+
 const usersFile = path.join(logsDir, 'users.json');
 let users = {};
 
@@ -46,7 +52,7 @@ app.post('/api/register', async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-    users[username] = {
+  users[username] = {
     username,
     password: hashedPassword,
     createdAt: new Date().toISOString()
@@ -74,7 +80,7 @@ app.post('/api/login', async (req, res) => {
     return res.status(400).json({ error: 'Invalid credentials' });
   }
 
-    const sessionId = uuid.v4();
+  const sessionId = uuid.v4();
   sessions[sessionId] = {
     username,
     createdAt: new Date().toISOString()
@@ -97,6 +103,8 @@ app.post('/api/logout', (req, res) => {
     res.status(400).json({ error: 'Invalid session' });
   }
 });
+
+const wss = new WebSocket.Server({ server: app });
 
 wss.on('connection', (ws, req) => {
   let authenticated = false;
@@ -182,12 +190,6 @@ wss.on('connection', (ws, req) => {
     clearTimeout(authTimeout);
   });
 });
-
-// Create logs directory if it doesn't exist
-const logsDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir);
-}
 
 // Initialize message log file
 const messageLogFile = path.join(logsDir, 'chat_messages.json');
